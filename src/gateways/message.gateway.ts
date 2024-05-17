@@ -1,5 +1,7 @@
-import { MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import { MessageBody, OnGatewayConnection, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { Server } from 'socket.io'
+
+const messages = [];
 
 @WebSocketGateway({
   cors: {
@@ -8,12 +10,18 @@ import { Server } from 'socket.io'
   },
   transports: ['polling'],
 })
-export  class  MessageGateway {
+export class MessageGateway implements OnGatewayConnection  {
+  
+  handleConnection(client: any, ...args: any[]) {
+    client.emit('onMessage', messages)
+  }
 
   @WebSocketServer() server: Server;
 
   @SubscribeMessage('sendMessage')
   sendMessage(@MessageBody() message: any) {
-    this.server.emit('onMessage', { m:  message.body })
+    messages.push(message)
+    console.log(messages)
+    this.server.emit('onMessage', messages)
   }
 }
